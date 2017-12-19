@@ -34,8 +34,13 @@ public class Session {
         b.setElement(Integer.parseInt(i), Integer.parseInt(j));
 
         if (b.gameOver(Integer.parseInt(i), Integer.parseInt(j))) {
-            user1.send("Game done");
-            user2.send("Game done");
+            if(Integer.parseInt(playerNum) == 1) {
+                user1.send("Game done");
+                user2.send("Game done:" + i + ":" + j);
+            } else {
+                user1.send("Game done:" + i + ":" + j);
+                user2.send("Game done");
+            }
         } else {
             if(Integer.parseInt(playerNum) == 1) {
                 user2.send(i + ":" + j);

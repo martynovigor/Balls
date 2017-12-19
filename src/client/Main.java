@@ -1,4 +1,4 @@
-package gui;
+package client;
 
 import java.awt.*;
 import javax.swing.*;
@@ -15,7 +15,8 @@ import model.*;
 public class Main extends JFrame{
     // two selected players
     private boolean isX = false;
-    private static JPanel welcome;
+    private static boolean active = false;
+    public static JPanel welcome;
     private Board b;
     private Socket socket;
     private PrintStream socketOutputWriter;
@@ -27,15 +28,16 @@ public class Main extends JFrame{
 
     private void startGame() {
         remove(welcome);
-        JPanel panel = new JPanel();
+        //JPanel panel = new JPanel();
+        welcome = new JPanel();
         //b = new Board(10, 3);
         Color BG = Color.BLACK;
         Dimension BTN_PREF_SIZE = new Dimension(60, 60);
         int GAP = 3;
         buttons = new JButton[b.getSize()][b.getSize()];
-        panel.setBackground(BG);
-        panel.setLayout(new GridLayout(b.getSize(), b.getSize(), GAP, GAP));
-        panel.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));
+        welcome.setBackground(BG);
+        welcome.setLayout(new GridLayout(b.getSize(), b.getSize(), GAP, GAP));
+        welcome.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));
 
         for(int i = 0; i < b.getSize(); i++)                      //Create grid of buttons
         {
@@ -48,12 +50,12 @@ public class Main extends JFrame{
                 buttons[i][j].setIcon(img);
                 buttons[i][j].setPreferredSize(BTN_PREF_SIZE);
                 buttons[i][j].setVisible(true);
-                panel.add(buttons[i][j]);
+                welcome.add(buttons[i][j]);
                 buttons[i][j].addActionListener(new myActionListener(i, j));        //Adding response event to buttons
             }
         }
 
-        add(panel, BorderLayout.CENTER);
+        add(welcome, BorderLayout.CENTER);
 
         pack();
         setResizable(false);
@@ -62,7 +64,8 @@ public class Main extends JFrame{
         if (isX) {
             return;
         }
-        try {
+        new Thread(new Updater(buttons, socketInputReader, isX)).start();
+        /*try {
             String rec = socketInputReader.readLine();
             System.out.println("start game: " + rec);
             String tokens[] = rec.split(":");
@@ -80,7 +83,7 @@ public class Main extends JFrame{
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     public Main(Board b, Socket socket) {
@@ -110,6 +113,14 @@ public class Main extends JFrame{
 
     }
 
+    public static synchronized boolean getActive() {
+        return active;
+    }
+
+    public static synchronized void setActive(boolean act) {
+        active = act;
+    }
+
     private class myActionListener implements ActionListener {
 
         private int i, j;
@@ -120,13 +131,18 @@ public class Main extends JFrame{
         }
 
         public void actionPerformed(ActionEvent a) {
+            if(!getActive()) {
+                return;
+            }
             ImageIcon img_x = (isX == true)
                     ? new ImageIcon("C:\\Users\\Igor\\IdeaProjects\\Balls\\src\\img\\x_new.png")
                     : new ImageIcon("C:\\Users\\Igor\\IdeaProjects\\Balls\\src\\img\\o_new.png");
             buttons[i][j].setIcon(img_x);
             buttons[i][j].setEnabled(false);
             socketOutputWriter.println(i + ":" + j);
-            try {
+
+            new Thread(new Updater(buttons, socketInputReader, isX)).start();
+            /*try {
                 String rec = socketInputReader.readLine();
 
                 System.out.println("action performed: " + rec);
@@ -145,7 +161,7 @@ public class Main extends JFrame{
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
             /*  public void actionPerformed(ActionEvent a) {
             int i = 0, j = 0;
@@ -217,6 +233,7 @@ public class Main extends JFrame{
                 public void actionPerformed(ActionEvent e) {
                     socketOutputWriter.println("NEWSESSION");
                     isX = true;
+                    setActive(true);
                     startGame();
                 }
             });
@@ -230,6 +247,7 @@ public class Main extends JFrame{
                     String session = jList.getSelectedValue();
                     socketOutputWriter.println("CONNECTTO=" + session.split(" ")[1]);
                     isX = false;
+                    setActive(false);
                     startGame();
                     //nessess
                 }

@@ -30,7 +30,7 @@ public class Sessions {
 
     public static synchronized String generateList() {
         StringBuilder sb = new StringBuilder();
-        sb.append("DATA:TESTNAME:");
+        sb.append("DATA:");
         for(Session s : getSessions()) {
             if(s.getPlayerNum() == 1) {
                 sb.append(s.getName()).append(":");
